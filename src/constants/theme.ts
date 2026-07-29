@@ -1,6 +1,7 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * SmartBite FUTO design tokens.
+ * Green campus brand + warm amber accent for prices / CTAs.
+ * Both light and dark palettes share the exact same keys (see ThemeColor).
  */
 
 import '@/global.css';
@@ -9,18 +10,44 @@ import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    text: '#10231A',
+    textSecondary: '#5B6B62',
+    textMuted: '#8A968E',
+    background: '#F5F8F4',
+    card: '#FFFFFF',
+    backgroundElement: '#EEF3EC',
+    backgroundSelected: '#E1EADD',
+    border: '#E4EAE1',
+    primary: '#15803D',
+    primaryDark: '#0F5C2E',
+    primaryMuted: '#DCF3E4',
+    onPrimary: '#FFFFFF',
+    accent: '#F59E0B',
+    onAccent: '#3A2600',
+    success: '#16A34A',
+    warning: '#D97706',
+    danger: '#DC2626',
+    star: '#F59E0B',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    text: '#ECF5EE',
+    textSecondary: '#9DB0A5',
+    textMuted: '#6F8177',
+    background: '#0E1512',
+    card: '#16201B',
+    backgroundElement: '#1C2A22',
+    backgroundSelected: '#26362C',
+    border: '#24332A',
+    primary: '#22C55E',
+    primaryDark: '#16A34A',
+    primaryMuted: '#14301F',
+    onPrimary: '#06210F',
+    accent: '#FBBF24',
+    onAccent: '#2A1C00',
+    success: '#22C55E',
+    warning: '#FBBF24',
+    danger: '#F87171',
+    star: '#FBBF24',
   },
 } as const;
 
@@ -28,13 +55,9 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
     serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
     rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: 'ui-monospace',
   },
   default: {
@@ -59,6 +82,14 @@ export const Spacing = {
   four: 24,
   five: 32,
   six: 64,
+} as const;
+
+export const Radius = {
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 24,
+  pill: 999,
 } as const;
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
