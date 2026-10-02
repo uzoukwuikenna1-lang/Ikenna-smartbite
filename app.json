@@ -13,7 +13,7 @@
     },
     "android": {
       "package": "com.smartbite.futo",
-      "versionCode": 2,
+      "versionCode": 3,
       "adaptiveIcon": {
         "backgroundColor": "#DCF3E4",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
