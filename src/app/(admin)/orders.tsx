@@ -80,7 +80,7 @@ function OrderRow({ order }: { order: Order }) {
       </View>
       <View style={styles.flex}>
         <View style={styles.rowTop}>
-          <ThemedText style={styles.orderId}>#{order.id.replace('ord-', '')}</ThemedText>
+          <ThemedText style={styles.orderId}>#{order.id.replace('ord-', '').slice(0, 8)}...</ThemedText>
           <ThemedText type="smallBold">{formatNaira(order.total)}</ThemedText>
         </View>
         <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>

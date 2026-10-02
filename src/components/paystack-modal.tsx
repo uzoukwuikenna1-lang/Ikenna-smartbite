@@ -1,12 +1,14 @@
 /**
  * Demo Paystack-style checkout modal.
- * Mimics the Paystack popup look & flow (card entry → processing → success) so
- * the demo feels real, but NO money moves and no card data leaves the device.
+ * Mimics the Paystack popup look & flow so the demo feels real, but NO money
+ * moves and no card data leaves the device. Two modes:
+ *   - card:     card number / expiry / CVV → "Pay"
+ *   - transfer: a (fake) one-time virtual account to send to → "I have paid"
  * Swap for the real Paystack SDK once the business is verified.
  */
 
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -40,21 +42,35 @@ export function PaystackModal({
   visible,
   email,
   amount,
+  method = 'card',
   onClose,
   onSuccess,
 }: {
   visible: boolean;
   email: string;
   amount: number;
+  method?: 'card' | 'transfer';
   onClose: () => void;
   onSuccess: (reference: string) => void;
 }) {
   const [card, setCard] = useState('');
   const [expiry, setExpiry] = useState('');
   const [cvv, setCvv] = useState('');
+  const [copied, setCopied] = useState(false);
   const [stage, setStage] = useState<'form' | 'processing' | 'success'>('form');
 
-  const canPay = luhnish(card) && /^\d{2}\/\d{2}$/.test(expiry) && cvv.length >= 3;
+  // A stable fake virtual account for the transfer flow.
+  const account = useMemo(
+    () => ({
+      bank: 'Paystack-Titan MFB',
+      number: '90' + String(Math.floor(10000000 + Math.random() * 89999999)),
+      name: 'SMARTBITE FUTO',
+    }),
+    [],
+  );
+
+  const cardValid = luhnish(card) && /^\d{2}\/\d{2}$/.test(expiry) && cvv.length >= 3;
+  const formValid = method === 'transfer' ? true : cardValid;
 
   function formatCard(v: string) {
     const digits = v.replace(/\D/g, '').slice(0, 16);
@@ -65,16 +81,24 @@ export function PaystackModal({
     return d.length > 2 ? `${d.slice(0, 2)}/${d.slice(2)}` : d;
   }
 
+  function copyAccount() {
+    setCopied(true);
+    try {
+      // Best-effort copy on web; harmless no-op elsewhere.
+      (globalThis as any)?.navigator?.clipboard?.writeText?.(account.number);
+    } catch {}
+    setTimeout(() => setCopied(false), 1500);
+  }
+
   function pay() {
-    if (!canPay) return;
+    if (!formValid) return;
     setStage('processing');
-    // Simulate Paystack authorising the charge.
+    // Simulate Paystack confirming the payment.
     setTimeout(() => {
       setStage('success');
       const reference = 'PSK_' + Date.now().toString(36).toUpperCase() + Math.floor(Math.random() * 1000);
       setTimeout(() => {
         onSuccess(reference);
-        // reset for next time
         setStage('form');
         setCard('');
         setExpiry('');
@@ -111,6 +135,56 @@ export function PaystackModal({
               </View>
               <ThemedText style={styles.successTitle}>Payment complete</ThemedText>
               <ThemedText style={styles.successSub}>Redirecting…</ThemedText>
+            </View>
+          ) : method === 'transfer' ? (
+            <View style={styles.body}>
+              <ThemedText style={styles.sectionLabel}>BANK TRANSFER</ThemedText>
+              <ThemedText style={styles.transferIntro}>
+                Transfer {formatNaira(amount)} to the account below, then tap “I have paid”.
+              </ThemedText>
+
+              <View style={styles.acctCard}>
+                <AcctRow label="Bank" value={account.bank} />
+                <View style={styles.acctDivider} />
+                <View style={styles.acctRow}>
+                  <View style={styles.flex}>
+                    <ThemedText style={styles.acctLabel}>Account Number</ThemedText>
+                    <ThemedText style={styles.acctNumber}>{account.number}</ThemedText>
+                  </View>
+                  <Pressable onPress={copyAccount} hitSlop={8} style={styles.copyBtn}>
+                    <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={16} color={PS.blue} />
+                    <ThemedText style={styles.copyText}>{copied ? 'Copied' : 'Copy'}</ThemedText>
+                  </Pressable>
+                </View>
+                <View style={styles.acctDivider} />
+                <AcctRow label="Account Name" value={account.name} />
+                <View style={styles.acctDivider} />
+                <AcctRow label="Amount" value={formatNaira(amount)} strong />
+              </View>
+
+              <View style={styles.testHint}>
+                <Ionicons name="information-circle-outline" size={14} color={PS.grey} />
+                <ThemedText style={styles.testHintText}>
+                  Demo mode — this is a one-time account for this order. No real transfer is needed.
+                </ThemedText>
+              </View>
+
+              <Pressable
+                onPress={pay}
+                disabled={stage === 'processing'}
+                style={[styles.payBtn, { backgroundColor: PS.blue }]}>
+                {stage === 'processing' ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <ThemedText style={styles.payBtnText}>I have paid</ThemedText>
+                )}
+              </Pressable>
+
+              <View style={styles.securedRow}>
+                <Ionicons name="lock-closed" size={12} color={PS.grey} />
+                <ThemedText style={styles.securedText}>Secured by </ThemedText>
+                <ThemedText style={[styles.securedText, { color: PS.navy, fontWeight: '800' }]}>Paystack</ThemedText>
+              </View>
             </View>
           ) : (
             <View style={styles.body}>
@@ -166,8 +240,8 @@ export function PaystackModal({
 
               <Pressable
                 onPress={pay}
-                disabled={!canPay || stage === 'processing'}
-                style={[styles.payBtn, { backgroundColor: canPay ? PS.blue : '#B6D9EA' }]}>
+                disabled={!formValid || stage === 'processing'}
+                style={[styles.payBtn, { backgroundColor: formValid ? PS.blue : '#B6D9EA' }]}>
                 {stage === 'processing' ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
@@ -188,7 +262,17 @@ export function PaystackModal({
   );
 }
 
+function AcctRow({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
+  return (
+    <View style={styles.acctRow}>
+      <ThemedText style={styles.acctLabel}>{label}</ThemedText>
+      <ThemedText style={[styles.acctValue, strong && { color: PS.navy, fontWeight: '800' }]}>{value}</ThemedText>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   backdrop: { flex: 1, backgroundColor: 'rgba(1,27,51,0.55)', justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: PS.bg,
@@ -214,6 +298,15 @@ const styles = StyleSheet.create({
   payAmount: { color: PS.navy, fontSize: 20, fontWeight: '800' },
   body: { padding: 20, gap: 12 },
   sectionLabel: { color: PS.grey, fontSize: 11, fontWeight: '800', letterSpacing: 1 },
+  transferIntro: { color: PS.grey, fontSize: 13, lineHeight: 18 },
+  acctCard: { backgroundColor: '#fff', borderWidth: 1, borderColor: PS.line, borderRadius: 12, paddingHorizontal: 14 },
+  acctRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, gap: 10 },
+  acctDivider: { height: 1, backgroundColor: PS.line },
+  acctLabel: { color: PS.grey, fontSize: 13 },
+  acctValue: { color: PS.navy, fontSize: 14, fontWeight: '600' },
+  acctNumber: { color: PS.navy, fontSize: 20, fontWeight: '800', letterSpacing: 1 },
+  copyBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#EAF6FC', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 },
+  copyText: { color: PS.blue, fontSize: 12, fontWeight: '800' },
   field: {
     flexDirection: 'row',
     alignItems: 'center',

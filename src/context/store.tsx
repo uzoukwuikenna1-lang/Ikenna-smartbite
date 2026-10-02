@@ -10,6 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { api, setAuthToken } from '@/api/client';
+import { emitOrderNotifications } from '@/api/notify';
 import { registerForPush } from '@/api/push';
 import type { AppUser, MenuItem, Order, Role, Vendor, VendorStatus } from '@/data/mock';
 
@@ -118,6 +119,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   // Keep the latest user role available to the polling loop without re-subscribing.
   const roleRef = useRef<Role | null>(null);
   roleRef.current = user?.role ?? null;
+  // For diffing order polls to fire local notifications.
+  const prevOrderStatusRef = useRef<Record<string, string>>({});
+  const ordersSeededRef = useRef(false);
 
   // ---------- data fetching ----------
   const refreshVendors = useCallback(async () => {
@@ -129,12 +133,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const role = roleRef.current;
     if (!role) return;
     try {
+      let next: Order[] = [];
       if (role === 'customer') {
-        const { orders } = await api.get<{ orders: Order[] }>('/api/orders');
-        setOrders(orders);
+        next = (await api.get<{ orders: Order[] }>('/api/orders')).orders;
       } else if (role === 'vendor') {
-        const { orders } = await api.get<{ orders: Order[] }>('/api/vendor/orders');
-        setOrders(orders);
+        next = (await api.get<{ orders: Order[] }>('/api/vendor/orders')).orders;
       } else if (role === 'rider') {
         const [a, m] = await Promise.all([
           api.get<{ orders: Order[] }>('/api/rider/available'),
@@ -142,10 +145,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         ]);
         const byId = new Map<string, Order>();
         [...a.orders, ...m.orders].forEach((o) => byId.set(o.id, o));
-        setOrders([...byId.values()]);
+        next = [...byId.values()];
       } else if (role === 'admin') {
-        const { orders } = await api.get<{ orders: Order[] }>('/api/admin/orders');
-        setOrders(orders);
+        next = (await api.get<{ orders: Order[] }>('/api/admin/orders')).orders;
+      }
+      setOrders(next);
+      // Raise on-device notifications for changes the poll just picked up.
+      if (role !== 'admin') {
+        prevOrderStatusRef.current = emitOrderNotifications(role, next, prevOrderStatusRef.current, ordersSeededRef.current);
+        ordersSeededRef.current = true;
       }
     } catch {
       // transient network error during polling — keep the last good data
@@ -231,6 +239,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setAdminStats(null);
     setAdminVendors([]);
     setAdminUsers([]);
+    prevOrderStatusRef.current = {};
+    ordersSeededRef.current = false;
   }, []);
 
   const updateProfile = useCallback(async (patch: { name?: string; email?: string; phone?: string }) => {

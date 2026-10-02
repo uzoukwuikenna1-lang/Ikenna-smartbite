@@ -265,6 +265,7 @@ export default function Checkout() {
         visible={showPaystack}
         email={user?.email ?? 'customer@futo.edu.ng'}
         amount={total}
+        method={method === 'transfer' ? 'transfer' : 'card'}
         onClose={() => setShowPaystack(false)}
         onSuccess={() => completeOrder()}
       />

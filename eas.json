@@ -13,14 +13,14 @@
       "distribution": "internal",
       "android": { "buildType": "apk" },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://REPLACE-WITH-YOUR-BACKEND.onrender.com"
+        "EXPO_PUBLIC_API_URL": "https://smartbite-api-w3sq.onrender.com"
       }
     },
     "production": {
       "autoIncrement": true,
       "android": { "buildType": "app-bundle" },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://REPLACE-WITH-YOUR-BACKEND.onrender.com"
+        "EXPO_PUBLIC_API_URL": "https://smartbite-api-w3sq.onrender.com"
       }
     }
   },

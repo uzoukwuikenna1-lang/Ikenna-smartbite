@@ -73,8 +73,8 @@ export default function OrderTracking() {
             <Ionicons name="restaurant" size={22} color={theme.primary} />
             <View style={[styles.routeLine, { backgroundColor: theme.primary }]} />
             <ThemedText style={{ fontSize: 24 }}>🛵</ThemedText>
-            <View style={[styles.routeLine, { backgroundColor: theme.border }]} />
-            <Ionicons name="home" size={22} color={theme.textMuted} />
+            <View style={[styles.routeLine, { backgroundColor: isDelivered ? theme.primary : theme.border }]} />
+            <Ionicons name="home" size={22} color={isDelivered ? theme.primary : theme.textMuted} />
           </View>
           <ThemedText style={styles.eta}>
             {isDelivered ? 'Delivered 🎉' : `Arriving in ~${eta} min`}

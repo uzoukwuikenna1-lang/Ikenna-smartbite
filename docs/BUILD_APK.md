@@ -78,8 +78,11 @@ another accept it as the vendor — the customer's screen updates on its own.
   `EXPO_PUBLIC_API_URL`, that the server is running, and (Option B) that the phone
   is on the same Wi‑Fi.
 - **Render free tier sleeps** after ~15 min idle; the first request wakes it (~30s).
-- **Push notifications** only arrive on a real device (which the APK is) once
-  `eas init` has set the project id — already handled if you did Step 2.
+- **Notifications** are on-device (local) and appear while the app is open — the
+  customer sees order status changes, the vendor sees new orders, etc. They need
+  no Firebase. (Background push when the app is fully closed would need Firebase
+  Cloud Messaging — free, but not set up in this build.) Grant the notification
+  permission prompt on first launch.
 - **iOS** uses the same setup with `--platform ios`, but installing on an iPhone
   needs the device registered on an Apple developer account; Android APK is the
   simplest for testers.

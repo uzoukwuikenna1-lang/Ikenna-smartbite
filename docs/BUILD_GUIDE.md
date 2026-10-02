@@ -47,7 +47,7 @@ The project brief proposed a stack; during implementation a few pragmatic,
 | Image storage | Cloudinary | **Self‑hosted in MongoDB** | Avoids needing a Cloudinary account; free and self‑contained |
 | Maps | Leaflet | **Simulated route card** | Live GPS tracking needs real devices + sockets; simulated for the PoC |
 | Payment | Paystack | **Demo Paystack‑style checkout** (no real charge) | A real Paystack integration needs a verified business; the demo mimics the flow |
-| Notifications | — | **Expo Push Notifications** | Real device push for order updates |
+| Notifications | — | **On-device (local) notifications** via expo-notifications | Free, no Firebase; order alerts while the app is open |
 | Hosting | Render / Railway | **Render (free tier)** | Free; note the free tier sleeps after ~15 min idle |
 
 **Key point for the report:** none of these compromises change what the app
@@ -262,21 +262,72 @@ picture to `POST /api/uploads`; the server stores it and returns a URL, which is
 saved on the menu item. Everywhere a dish is shown, the app displays the photo,
 falling back to an emoji when there is none.
 
-### 7.4 Push notifications
-On login the app registers the device's **Expo push token** with the server.
-When an order is placed the vendor is notified; when the status changes the
-customer is notified (accepted, preparing, on the way, delivered). *(Remote push
-requires a physical device and a one‑time `eas init` to obtain a project id.)*
+### 7.4 Order notifications
+The app raises notifications for order events — the **customer** is notified when
+their order's status changes (accepted, preparing, on the way, delivered); the
+**vendor** is notified of a new incoming order; the **rider** is notified when a
+new delivery becomes available.
+
+These are **on‑device (local) notifications** that the app raises itself, driven
+by the same polling that keeps the screens live. This approach needs **no paid
+service and no Firebase setup**, which keeps the project self‑contained and free
+— appropriate for a proof of concept. They appear while the app is open.
+
+*(For completeness: true background push — a notification that arrives when the
+app is fully closed — can be added later using Firebase Cloud Messaging with
+Expo's push service. Both are free of charge; it was left out of this build only
+to avoid the extra Firebase configuration, not for cost reasons.)*
 
 ---
 
 ## 8. Running the Project
 
+### 8.1 Environment configuration (use your own credentials)
+
+The app and API read their secrets from `.env` files that are **not** shipped
+with the source (they hold private credentials, so they must never be committed
+or shared). Create them yourself and fill in **your own** values — most
+importantly, **your own free MongoDB database**.
+
+**Backend — create `server/.env`:**
+
+| Variable | What to put |
+|----------|-------------|
+| `PORT` | `4000` |
+| `MONGODB_URI` | Your own MongoDB connection string (see below). *Leave blank to use the built-in in-memory database instead.* |
+| `JWT_SECRET` | Any long random string (used to sign login tokens) |
+| `CORS_ORIGIN` | `*` |
+
+**Getting a free MongoDB URL:** create a free account at
+**mongodb.com/atlas** → create a free **M0** cluster → under *Database Access*
+add a database user (username + password) → under *Network Access* allow your IP
+(or `0.0.0.0/0` for testing) → click *Connect → Drivers* and copy the connection
+string. It looks like:
+
+```
+mongodb+srv://<username>:<password>@<cluster>.mongodb.net/smartbite
+```
+
+Paste it as `MONGODB_URI` (replacing `<username>`/`<password>` with the ones you
+created).
+
+**Mobile app — create `.env` in the project root:**
+
+| Variable | What to put |
+|----------|-------------|
+| `EXPO_PUBLIC_API_URL` | The address of your running backend — e.g. `http://<your-LAN-IP>:4000` when testing on the same Wi-Fi, or your deployed URL |
+
+> **Tip:** if you leave `MONGODB_URI` blank, the API automatically starts a
+> temporary in-memory database and seeds the demo data — the quickest way to try
+> everything locally with no signup at all.
+
+### 8.2 Run
+
 **Backend**
 ```bash
 cd server
 npm install
-npm start        # uses MongoDB Atlas from server/.env, or an in-memory DB if none
+npm start
 ```
 
 **Mobile app**
@@ -284,8 +335,6 @@ npm start        # uses MongoDB Atlas from server/.env, or an in-memory DB if no
 npm install
 npx expo start   # press w for web, or scan the QR code with Expo Go on a phone
 ```
-On a physical phone, set `EXPO_PUBLIC_API_URL` (in a `.env` file) to your
-computer's LAN IP, e.g. `http://192.168.1.20:4000`.
 
 **Demo accounts** (password `demo123`): `chidera@` (customer), `mama@` (vendor),
 `emeka@` (rider), `admin@futo.edu.ng`.
@@ -309,7 +358,9 @@ Each phase was verified before moving on:
 Because this is a proof of concept, a few areas are deliberately simplified:
 - **Payment** is a demo (no real charge) — replace with the live Paystack SDK.
 - **Delivery tracking** uses a simulated route rather than live GPS.
-- **Push notifications** need a physical device and an Expo project id to deliver.
+- **Notifications** appear while the app is open (on‑device). Delivering them when
+  the app is fully closed would use Firebase Cloud Messaging — which is free, but
+  adds setup, so it is out of scope for this proof of concept.
 - The free hosting tier **sleeps when idle**, so the first request after a pause
   is slow.
 
