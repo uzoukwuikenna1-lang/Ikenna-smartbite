@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { IosInstallHint } from '@/components/ios-install-hint';
 import { Colors } from '@/constants/theme';
 import { StoreProvider } from '@/context/store';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -43,6 +44,7 @@ export default function RootLayout() {
               <Stack.Screen name="settings" />
               <Stack.Screen name="vendor-item" />
             </Stack>
+            <IosInstallHint />
             <StatusBar style="auto" />
           </ThemeProvider>
         </StoreProvider>
