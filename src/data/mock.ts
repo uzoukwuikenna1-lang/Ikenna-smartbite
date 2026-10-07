@@ -95,6 +95,7 @@ export type Order = {
   rated?: boolean;
   mine?: boolean;
   riderAccepted?: boolean;
+  rider?: { name: string; phone: string; vehicle: string; plate: string } | null;
 };
 
 export type UserStatus = 'active' | 'suspended';

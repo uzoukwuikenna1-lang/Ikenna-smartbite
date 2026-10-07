@@ -40,6 +40,18 @@ export function presentMenuItem(m: AnyDoc) {
 }
 
 export function presentOrder(o: AnyDoc, currentUserId?: string) {
+  // riderId may be a raw ObjectId or, when the route populates it, the rider's
+  // User document. Only expose rider details once they've actually accepted.
+  const riderDoc = o.riderId && typeof o.riderId === 'object' && o.riderId.name ? o.riderId : null;
+  const rider =
+    o.riderAccepted && riderDoc
+      ? {
+          name: riderDoc.name,
+          phone: riderDoc.phone ?? '',
+          vehicle: riderDoc.rider?.vehicle ?? '',
+          plate: riderDoc.rider?.plate ?? '',
+        }
+      : null;
   return {
     id: String(o._id),
     vendorId: String(o.vendorId),
@@ -62,6 +74,7 @@ export function presentOrder(o: AnyDoc, currentUserId?: string) {
     paymentMethod: o.paymentMethod,
     rated: o.rated,
     riderAccepted: o.riderAccepted,
+    rider,
     createdAt: (o.createdAt instanceof Date ? o.createdAt : new Date(o.createdAt)).toISOString(),
     mine: currentUserId ? String(o.customerId) === currentUserId : undefined,
   };

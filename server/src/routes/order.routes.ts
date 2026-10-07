@@ -74,7 +74,10 @@ router.get(
   '/',
   requireRole('customer'),
   asyncHandler(async (req, res) => {
-    const orders = await Order.find({ customerId: req.user!.id }).sort({ createdAt: -1 }).lean();
+    const orders = await Order.find({ customerId: req.user!.id })
+      .populate('riderId', 'name phone rider')
+      .sort({ createdAt: -1 })
+      .lean();
     res.json({ orders: orders.map((o) => presentOrder(o, req.user!.id)) });
   }),
 );
@@ -83,12 +86,14 @@ router.get(
 router.get(
   '/:id',
   asyncHandler(async (req, res) => {
-    const order = await Order.findById(req.params.id).lean();
+    const order = await Order.findById(req.params.id).populate('riderId', 'name phone rider').lean();
     if (!order) throw notFound('Order not found');
     const uid = req.user!.id;
+    // riderId is populated to a doc here, so read its _id for the ownership check.
+    const riderId = order.riderId ? String((order.riderId as any)._id ?? order.riderId) : null;
     const involved =
       String(order.customerId) === uid ||
-      (order.riderId && String(order.riderId) === uid) ||
+      riderId === uid ||
       req.user!.role === 'admin';
     if (!involved) throw forbidden('Not your order');
     res.json({ order: presentOrder(order, uid) });

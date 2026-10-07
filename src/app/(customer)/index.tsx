@@ -2,11 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 
+import { LocationPicker } from '@/components/location-picker';
 import { ThemedText } from '@/components/themed-text';
 import { Screen } from '@/components/ui/screen';
 import { VendorCard } from '@/components/vendor-card';
 import { Radius, Spacing } from '@/constants/theme';
-import { useAuth, useVendors } from '@/context/store';
+import { useAuth, useDeliveryLocation, useVendors } from '@/context/store';
 import { useTheme } from '@/hooks/use-theme';
 
 const CATEGORIES = ['All', 'Rice', 'Fast food', 'Suya', 'Swallow', 'Snacks', 'Healthy'];
@@ -15,7 +16,9 @@ export default function CustomerHome() {
   const theme = useTheme();
   const { user } = useAuth();
   const { vendors: allVendors, refreshVendors } = useVendors();
+  const { deliveryLocation, setDeliveryLocation } = useDeliveryLocation();
   const [category, setCategory] = useState('All');
+  const [showLocation, setShowLocation] = useState(false);
 
   useEffect(() => {
     refreshVendors();
@@ -43,16 +46,18 @@ export default function CustomerHome() {
         ListHeaderComponent={
           <View style={styles.header}>
             <View style={styles.topRow}>
-              <View style={styles.flex}>
+              <Pressable style={styles.flex} onPress={() => setShowLocation(true)} hitSlop={8}>
                 <ThemedText type="small" themeColor="textSecondary">
                   Deliver to
                 </ThemedText>
                 <View style={styles.locationRow}>
                   <Ionicons name="location" size={16} color={theme.primary} />
-                  <ThemedText style={styles.location}>Hostel B, FUTO</ThemedText>
+                  <ThemedText style={styles.location} numberOfLines={1}>
+                    {deliveryLocation}, FUTO
+                  </ThemedText>
                   <Ionicons name="chevron-down" size={16} color={theme.textMuted} />
                 </View>
-              </View>
+              </Pressable>
               <View style={[styles.avatar, { backgroundColor: theme.primaryMuted }]}>
                 <ThemedText style={styles.avatarText}>
                   {firstName.charAt(0).toUpperCase()}
@@ -104,6 +109,13 @@ export default function CustomerHome() {
             No vendors in this category yet.
           </ThemedText>
         }
+      />
+
+      <LocationPicker
+        visible={showLocation}
+        selected={deliveryLocation}
+        onSelect={setDeliveryLocation}
+        onClose={() => setShowLocation(false)}
       />
     </Screen>
   );

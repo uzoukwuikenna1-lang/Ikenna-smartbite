@@ -1,14 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, Tabs } from 'expo-router';
 
-import { Spacing } from '@/constants/theme';
 import { useAuth, useOrders } from '@/context/store';
+import { useTabBarOptions } from '@/hooks/use-tabbar';
 import { useTheme } from '@/hooks/use-theme';
 
 export default function RiderLayout() {
   const theme = useTheme();
   const { user } = useAuth();
   const { orders } = useOrders();
+  const tabBar = useTabBarOptions();
 
   if (!user || user.role !== 'rider') {
     return <Redirect href="/role-select" />;
@@ -20,15 +21,7 @@ export default function RiderLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: theme.primary,
-        tabBarInactiveTintColor: theme.textMuted,
-        tabBarStyle: {
-          backgroundColor: theme.card,
-          borderTopColor: theme.border,
-          height: 88,
-          paddingTop: Spacing.two,
-        },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+        ...tabBar,
       }}>
       <Tabs.Screen
         name="index"

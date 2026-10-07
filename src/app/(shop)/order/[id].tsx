@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { CallModal } from '@/components/call-modal';
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
@@ -19,6 +20,7 @@ export default function OrderTracking() {
 
   const order = getOrder(id);
   const [rating, setRating] = useState(0);
+  const [showCall, setShowCall] = useState(false);
 
   const currentIndex = order ? ORDER_FLOW.indexOf(order.status) : -1;
   const isDelivered = order?.status === 'delivered';
@@ -41,6 +43,10 @@ export default function OrderTracking() {
 
   const vendor = getVendor(order.vendorId);
   const eta = vendor ? vendor.deliveryMins : 20;
+
+  // Rider identity comes from the rider who actually accepted the order.
+  const riderName = order.rider?.name ?? 'Your rider';
+  const riderVehicle = [order.rider?.vehicle, order.rider?.plate].filter(Boolean).join(' • ');
 
   return (
     <Screen edges={['top']}>
@@ -117,23 +123,40 @@ export default function OrderTracking() {
           })}
         </View>
 
-        {/* Rider */}
-        {currentIndex >= ORDER_FLOW.indexOf('rider_assigned') && (
+        {/* Rider — only shown once a rider has actually accepted the delivery */}
+        {order.riderAccepted ? (
           <View style={[styles.riderCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
             <View style={[styles.riderAvatar, { backgroundColor: theme.primaryMuted }]}>
               <ThemedText style={{ fontSize: 24 }}>🧑🏾</ThemedText>
             </View>
             <View style={styles.flex}>
-              <ThemedText style={styles.riderName}>Emeka (Rider)</ThemedText>
+              <ThemedText style={styles.riderName}>{riderName} · your rider</ThemedText>
+              {riderVehicle ? (
+                <ThemedText type="small" themeColor="textSecondary">
+                  {riderVehicle}
+                </ThemedText>
+              ) : null}
+            </View>
+            <Pressable
+              onPress={() => setShowCall(true)}
+              hitSlop={8}
+              style={[styles.riderBtn, { backgroundColor: theme.primaryMuted }]}>
+              <Ionicons name="call" size={20} color={theme.primary} />
+            </Pressable>
+          </View>
+        ) : order.status === 'rider_assigned' ? (
+          <View style={[styles.riderCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+            <View style={[styles.riderAvatar, { backgroundColor: theme.backgroundElement }]}>
+              <ActivityIndicator color={theme.primary} />
+            </View>
+            <View style={styles.flex}>
+              <ThemedText style={styles.riderName}>Finding you a rider…</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
-                Honda • ABC-123 XY
+                Your order is ready — assigning a nearby rider.
               </ThemedText>
             </View>
-            <View style={[styles.riderBtn, { backgroundColor: theme.primaryMuted }]}>
-              <Ionicons name="call" size={20} color={theme.primary} />
-            </View>
           </View>
-        )}
+        ) : null}
 
         {/* Order details */}
         <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
@@ -196,6 +219,13 @@ export default function OrderTracking() {
           style={styles.backCta}
         />
       </ScrollView>
+
+      <CallModal
+        visible={showCall}
+        name={riderName}
+        subtitle={riderVehicle || 'Your rider'}
+        onClose={() => setShowCall(false)}
+      />
     </Screen>
   );
 }

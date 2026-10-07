@@ -55,6 +55,7 @@
           }
         }
       ],
+      "./plugins/withGradleMemory",
       "expo-image",
       "expo-status-bar",
       "expo-web-browser"

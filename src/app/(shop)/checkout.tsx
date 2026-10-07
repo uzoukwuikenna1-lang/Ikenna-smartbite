@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
 import { TextField } from '@/components/ui/text-field';
 import { Radius, Spacing } from '@/constants/theme';
-import { useAddresses, useAuth, useCart, useOrders, useVendors } from '@/context/store';
+import { useAddresses, useAuth, useCart, useDeliveryLocation, useOrders, useVendors } from '@/context/store';
 import { formatNaira } from '@/data/mock';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -29,12 +29,15 @@ export default function Checkout() {
   const { addresses, defaultAddress } = useAddresses();
   const { getVendor } = useVendors();
   const { user } = useAuth();
+  const { deliveryLocation } = useDeliveryLocation();
 
   const vendor = cartVendorId ? getVendor(cartVendorId) : undefined;
   const deliveryFee = vendor?.deliveryFee ?? 0;
   const total = cartSubtotal + deliveryFee;
 
-  const [address, setAddress] = useState(defaultAddress?.details ?? '');
+  const [address, setAddress] = useState(
+    deliveryLocation ? `${deliveryLocation}, FUTO` : (defaultAddress?.details ?? ''),
+  );
   const [note, setNote] = useState('');
   const [method, setMethod] = useState<PayMethod>('card');
   const [paying, setPaying] = useState(false);
@@ -50,7 +53,9 @@ export default function Checkout() {
       // Real device geolocation — prompts the user for permission the first time.
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        setLocError('Location permission denied. You can type your address instead.');
+        setLocError(
+          'Location access is off. Allow it when prompted (on iPhone: Settings → Privacy → Location → Safari), or just type your address / pick a spot on the home screen.',
+        );
         return;
       }
       const pos = await Location.getCurrentPositionAsync({

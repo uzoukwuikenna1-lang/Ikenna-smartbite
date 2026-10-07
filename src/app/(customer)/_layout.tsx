@@ -1,14 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, Tabs } from 'expo-router';
 
-import { Spacing } from '@/constants/theme';
 import { useAuth, useCart } from '@/context/store';
+import { useTabBarOptions } from '@/hooks/use-tabbar';
 import { useTheme } from '@/hooks/use-theme';
 
 export default function CustomerLayout() {
   const theme = useTheme();
   const { user } = useAuth();
   const { cartCount } = useCart();
+  const tabBar = useTabBarOptions();
 
   // Guard: only a logged-in customer belongs here.
   if (!user || user.role !== 'customer') {
@@ -19,15 +20,7 @@ export default function CustomerLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: theme.primary,
-        tabBarInactiveTintColor: theme.textMuted,
-        tabBarStyle: {
-          backgroundColor: theme.card,
-          borderTopColor: theme.border,
-          height: 88,
-          paddingTop: Spacing.two,
-        },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+        ...tabBar,
       }}>
       <Tabs.Screen
         name="index"

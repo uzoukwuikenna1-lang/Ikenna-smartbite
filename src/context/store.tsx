@@ -12,6 +12,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { api, setAuthToken } from '@/api/client';
 import { emitOrderNotifications } from '@/api/notify';
 import { registerForPush } from '@/api/push';
+import { DEFAULT_LOCATION } from '@/constants/locations';
 import type { AppUser, MenuItem, Order, Role, Vendor, VendorStatus } from '@/data/mock';
 
 const TOKEN_KEY = 'smartbite.token';
@@ -101,6 +102,9 @@ type StoreValue = {
   refreshAdmin: () => Promise<void>;
   setVendorStatus: (vendorId: string, status: VendorStatus) => Promise<void>;
   toggleUserStatus: (userId: string) => Promise<void>;
+  // delivery location (customer-chosen campus area)
+  deliveryLocation: string;
+  setDeliveryLocation: (loc: string) => void;
 };
 
 const StoreContext = createContext<StoreValue | null>(null);
@@ -115,6 +119,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [adminStats, setAdminStats] = useState<AdminStats | null>(null);
   const [adminVendors, setAdminVendors] = useState<Vendor[]>([]);
   const [adminUsers, setAdminUsers] = useState<AppUser[]>([]);
+  const [deliveryLocation, setDeliveryLocation] = useState<string>(DEFAULT_LOCATION);
 
   // Keep the latest user role available to the polling loop without re-subscribing.
   const roleRef = useRef<Role | null>(null);
@@ -495,6 +500,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     refreshAdmin,
     setVendorStatus,
     toggleUserStatus,
+    deliveryLocation,
+    setDeliveryLocation,
   };
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
@@ -585,6 +592,11 @@ export function useNotifPrefs() {
 export function useFavourites() {
   const s = useStore();
   return { favourites: s.user?.favourites ?? [], isFavourite: s.isFavourite, toggleFavourite: s.toggleFavourite };
+}
+
+export function useDeliveryLocation() {
+  const s = useStore();
+  return { deliveryLocation: s.deliveryLocation, setDeliveryLocation: s.setDeliveryLocation };
 }
 
 export function useAdmin() {

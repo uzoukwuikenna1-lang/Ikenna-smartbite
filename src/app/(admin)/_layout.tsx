@@ -1,13 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, Tabs } from 'expo-router';
 
-import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/store';
+import { useTabBarOptions } from '@/hooks/use-tabbar';
 import { useTheme } from '@/hooks/use-theme';
 
 export default function AdminLayout() {
   const theme = useTheme();
   const { user } = useAuth();
+  const tabBar = useTabBarOptions(10);
 
   if (!user || user.role !== 'admin') {
     return <Redirect href="/role-select" />;
@@ -17,15 +18,7 @@ export default function AdminLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: theme.primary,
-        tabBarInactiveTintColor: theme.textMuted,
-        tabBarStyle: {
-          backgroundColor: theme.card,
-          borderTopColor: theme.border,
-          height: 88,
-          paddingTop: Spacing.two,
-        },
-        tabBarLabelStyle: { fontSize: 10, fontWeight: '600' },
+        ...tabBar,
       }}>
       <Tabs.Screen
         name="index"

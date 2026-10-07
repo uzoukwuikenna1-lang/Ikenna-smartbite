@@ -61,7 +61,15 @@ const MENU: MenuSeed[] = [
   { vendorKey: 'v6', name: 'Ofada Rice & Ayamase', description: 'Local rice with green pepper sauce', price: 2000, emoji: '🍛', category: 'Rice' },
 ];
 
-type UserSeed = { name: string; email: string; role: 'customer' | 'rider' | 'vendor' | 'admin'; status?: 'active' | 'suspended'; vendorKey?: string };
+type UserSeed = {
+  name: string;
+  email: string;
+  role: 'customer' | 'rider' | 'vendor' | 'admin';
+  status?: 'active' | 'suspended';
+  vendorKey?: string;
+  phone?: string;
+  rider?: { vehicle: string; plate: string };
+};
 
 const USERS: UserSeed[] = [
   { name: 'Chidera Okeke', email: 'chidera@futo.edu.ng', role: 'customer' },
@@ -69,8 +77,8 @@ const USERS: UserSeed[] = [
   { name: 'Tunde Adeyemi', email: 'tunde@futo.edu.ng', role: 'customer' },
   { name: 'Ada Nwosu', email: 'ada@futo.edu.ng', role: 'customer', status: 'suspended' },
   { name: 'Grace Effiong', email: 'grace@futo.edu.ng', role: 'customer' },
-  { name: 'Emeka Eze', email: 'emeka@futo.edu.ng', role: 'rider' },
-  { name: 'Ibrahim Kabir', email: 'ibrahim@futo.edu.ng', role: 'rider' },
+  { name: 'Emeka Eze', email: 'emeka@futo.edu.ng', role: 'rider', phone: '0803 123 4567', rider: { vehicle: 'Honda', plate: 'ABC-123 XY' } },
+  { name: 'Ibrahim Kabir', email: 'ibrahim@futo.edu.ng', role: 'rider', phone: '0806 987 6543', rider: { vehicle: 'Bajaj', plate: 'IMO-456 FT' } },
   { name: 'Mama Nkechi', email: 'mama@futo.edu.ng', role: 'vendor', vendorKey: 'v1' },
   { name: 'Platform Admin', email: 'admin@futo.edu.ng', role: 'admin' },
 ];
@@ -128,6 +136,8 @@ export async function seedDatabase() {
       passwordHash,
       role: u.role,
       status: u.status ?? 'active',
+      phone: u.phone ?? '',
+      rider: u.rider,
       vendorId: u.vendorKey ? vendorId.get(u.vendorKey) : null,
       addresses:
         u.email === 'chidera@futo.edu.ng'
