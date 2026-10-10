@@ -7,23 +7,26 @@
 
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import { api } from './client';
+import { Notifications } from './notifications';
 
-// Show notifications while the app is foregrounded.
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+// Show notifications while the app is foregrounded (skipped in Expo Go, where
+// expo-notifications isn't loaded).
+if (Notifications) {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
+}
 
 export async function registerForPush(): Promise<void> {
-  if (Platform.OS === 'web') return; // remote push isn't supported on web
+  if (Platform.OS === 'web' || !Notifications) return; // not supported on web / Expo Go
   if (!Device.isDevice) return; // needs a physical device to get a token
 
   try {

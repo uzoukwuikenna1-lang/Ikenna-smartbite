@@ -5,13 +5,13 @@
  * is open. (Background push when the app is fully closed still needs FCM.)
  */
 
-import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import type { Order, Role } from '@/data/mock';
+import { Notifications } from './notifications';
 
 export async function notifyLocal(title: string, body: string) {
-  if (Platform.OS === 'web') return;
+  if (Platform.OS === 'web' || !Notifications) return;
   try {
     await Notifications.scheduleNotificationAsync({
       content: { title, body, sound: 'default' },
