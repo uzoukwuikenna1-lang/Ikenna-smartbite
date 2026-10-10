@@ -105,7 +105,7 @@ export default function MyDeliveries() {
       <PinModal
         order={pinFor}
         onClose={() => setPinFor(null)}
-        onConfirm={(pin) => completeDelivery(pinFor!.id, pin)}
+        onConfirm={completeDelivery}
       />
     </Screen>
   );
@@ -118,7 +118,7 @@ function PinModal({
 }: {
   order: Order | null;
   onClose: () => void;
-  onConfirm: (pin: string) => Promise<void>;
+  onConfirm: (orderId: string, pin: string) => Promise<void>;
 }) {
   const theme = useTheme();
   const [pin, setPin] = useState('');
@@ -136,6 +136,7 @@ function PinModal({
   }
 
   async function submit() {
+    if (!order) return;
     if (pin.trim().length < 4) {
       setError('Enter the 4-digit PIN from the customer.');
       return;
@@ -143,7 +144,7 @@ function PinModal({
     setBusy(true);
     setError(null);
     try {
-      await onConfirm(pin.trim());
+      await onConfirm(order.id, pin.trim());
       onClose();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not confirm delivery.');
