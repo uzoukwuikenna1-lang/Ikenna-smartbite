@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
   top: { alignItems: 'center', gap: 10 },
   avatar: { width: 108, height: 108, borderRadius: 54, backgroundColor: '#1C2A22', alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   avatarEmoji: { fontSize: 56, lineHeight: 64 },
-  name: { color: '#fff', fontSize: 28, fontWeight: '800' },
+  name: { color: '#fff', fontSize: 28, lineHeight: 34, fontWeight: '800' },
   sub: { color: '#9DB0A5', fontSize: 14 },
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#22C55E' },

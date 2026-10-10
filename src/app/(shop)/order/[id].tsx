@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
   pinHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one + 2 },
   pinDigits: { flexDirection: 'row', gap: Spacing.two },
   pinBox: { width: 48, height: 58, borderRadius: Radius.md, alignItems: 'center', justifyContent: 'center' },
-  pinDigit: { fontSize: 28, fontWeight: '800' },
+  pinDigit: { fontSize: 28, lineHeight: 34, fontWeight: '800', includeFontPadding: false, textAlign: 'center' },
   pinHint: { textAlign: 'center' },
   detailsTitle: { fontSize: 16, fontWeight: '800', marginBottom: Spacing.two },
   detailRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 4 },

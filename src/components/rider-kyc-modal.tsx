@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
   stepBar: { flex: 1, height: 5, borderRadius: 3 },
   center: { alignItems: 'center', gap: Spacing.two },
   hero: { width: 96, height: 96, borderRadius: 48, alignItems: 'center', justifyContent: 'center', marginBottom: Spacing.two },
-  title: { fontSize: 24, fontWeight: '800', textAlign: 'center' },
+  title: { fontSize: 24, lineHeight: 30, fontWeight: '800', textAlign: 'center' },
   sub: { textAlign: 'center', paddingHorizontal: Spacing.three },
   bullets: { gap: Spacing.two, marginVertical: Spacing.three, alignSelf: 'stretch', paddingHorizontal: Spacing.three },
   bullet: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
