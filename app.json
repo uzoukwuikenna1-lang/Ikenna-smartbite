@@ -46,6 +46,13 @@
           "locationWhenInUsePermission": "SmartBite uses your location to set your delivery address."
         }
       ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "SmartBite uses the camera for rider identity (face) verification.",
+          "recordAudioAndroid": false
+        }
+      ],
       "expo-notifications",
       [
         "expo-build-properties",

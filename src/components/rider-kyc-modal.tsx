@@ -7,6 +7,7 @@
  */
 
 import { Ionicons } from '@expo/vector-icons';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
@@ -188,14 +189,33 @@ export function RiderKycModal({
   );
 }
 
-/** Simulated face scan — animates a scan line, then auto-advances. */
+/**
+ * Face scan — shows the live front camera so it feels like a real check, with
+ * an animated scan line over it, then auto-advances. It's still a mock: no face
+ * matching happens. Falls back to an avatar if the camera is unavailable/denied
+ * (e.g. an emulator) so the flow never gets stuck.
+ */
 function FaceScan({ submitting, onScanned }: { submitting: boolean; onScanned: () => void }) {
   const theme = useTheme();
+  const [permission, requestPermission] = useCameraPermissions();
   const scan = useRef(new Animated.Value(0)).current;
   const [caption, setCaption] = useState('Position your face in the frame');
   const firedRef = useRef(false);
 
+  // Ask for camera access as soon as we reach this step.
   useEffect(() => {
+    if (permission && !permission.granted && permission.canAskAgain) {
+      requestPermission();
+    }
+  }, [permission, requestPermission]);
+
+  // The scan only starts once the permission decision is in (granted, or
+  // denied-and-can't-ask), so the live camera is already up when it runs.
+  const scanReady = !!permission && (permission.granted || !permission.canAskAgain);
+  const useCamera = !!permission?.granted;
+
+  useEffect(() => {
+    if (!scanReady) return;
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(scan, { toValue: 1, duration: 1200, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
@@ -204,15 +224,15 @@ function FaceScan({ submitting, onScanned }: { submitting: boolean; onScanned: (
     );
     loop.start();
 
-    const t1 = setTimeout(() => setCaption('Scanning your face…'), 900);
-    const t2 = setTimeout(() => setCaption('Matching to your ID…'), 2200);
+    const t1 = setTimeout(() => setCaption('Scanning your face…'), 1000);
+    const t2 = setTimeout(() => setCaption('Matching to your ID…'), 2600);
     const t3 = setTimeout(() => {
       setCaption('Face captured');
       if (!firedRef.current) {
         firedRef.current = true;
         onScanned();
       }
-    }, 3400);
+    }, 4000);
 
     return () => {
       loop.stop();
@@ -221,7 +241,7 @@ function FaceScan({ submitting, onScanned }: { submitting: boolean; onScanned: (
       clearTimeout(t3);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [scanReady]);
 
   const translateY = scan.interpolate({ inputRange: [0, 1], outputRange: [-96, 96] });
 
@@ -229,11 +249,15 @@ function FaceScan({ submitting, onScanned }: { submitting: boolean; onScanned: (
     <View style={styles.center}>
       <ThemedText style={styles.title}>Face verification</ThemedText>
       <ThemedText themeColor="textSecondary" style={styles.sub}>
-        {submitting ? 'Verifying…' : caption}
+        {!scanReady ? 'Starting camera…' : submitting ? 'Verifying…' : caption}
       </ThemedText>
 
       <View style={[styles.faceFrame, { borderColor: theme.primary, backgroundColor: theme.backgroundElement }]}>
-        <ThemedText style={styles.faceEmoji}>🧑🏾</ThemedText>
+        {useCamera ? (
+          <CameraView style={StyleSheet.absoluteFill} facing="front" mirror />
+        ) : (
+          <ThemedText style={styles.faceEmoji}>🧑🏾</ThemedText>
+        )}
         <Animated.View
           style={[styles.scanLine, { backgroundColor: theme.primary, transform: [{ translateY }] }]}
         />
@@ -246,7 +270,9 @@ function FaceScan({ submitting, onScanned }: { submitting: boolean; onScanned: (
       <View style={[styles.demoTag, { backgroundColor: theme.backgroundElement }]}>
         <Ionicons name="information-circle-outline" size={14} color={theme.textMuted} />
         <ThemedText type="small" themeColor="textMuted" style={styles.flex}>
-          Demo scan — your camera is not actually used.
+          {useCamera
+            ? 'Demo scan — the camera is live but no real identity check is done.'
+            : 'Camera unavailable — continuing the demo scan.'}
         </ThemedText>
       </View>
     </View>
