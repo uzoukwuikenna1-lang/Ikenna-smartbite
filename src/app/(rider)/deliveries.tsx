@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { FlatList, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
@@ -24,8 +24,9 @@ function whenText(iso: string) {
 
 export default function MyDeliveries() {
   const theme = useTheme();
-  const { orders, setOrderStatus } = useOrders();
+  const { orders, setOrderStatus, completeDelivery } = useOrders();
   const [tab, setTab] = useState<Tab>('active');
+  const [pinFor, setPinFor] = useState<Order | null>(null);
 
   const active = useMemo(
     () => orders.filter((o) => o.riderAccepted && ACTIVE.includes(o.status)),
@@ -75,7 +76,11 @@ export default function MyDeliveries() {
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) =>
           tab === 'active' ? (
-            <DeliveryCard order={item} onAdvance={(s) => setOrderStatus(item.id, s)} />
+            <DeliveryCard
+              order={item}
+              onAdvance={(s) => setOrderStatus(item.id, s)}
+              onDeliver={() => setPinFor(item)}
+            />
           ) : (
             <PastDeliveryCard order={item} />
           )
@@ -96,7 +101,99 @@ export default function MyDeliveries() {
           </View>
         }
       />
+
+      <PinModal
+        order={pinFor}
+        onClose={() => setPinFor(null)}
+        onConfirm={(pin) => completeDelivery(pinFor!.id, pin)}
+      />
     </Screen>
+  );
+}
+
+function PinModal({
+  order,
+  onClose,
+  onConfirm,
+}: {
+  order: Order | null;
+  onClose: () => void;
+  onConfirm: (pin: string) => Promise<void>;
+}) {
+  const theme = useTheme();
+  const [pin, setPin] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  // Reset the field whenever a new delivery is opened.
+  const openId = order?.id ?? null;
+  const [lastId, setLastId] = useState<string | null>(null);
+  if (openId !== lastId) {
+    setLastId(openId);
+    setPin('');
+    setError(null);
+    setBusy(false);
+  }
+
+  async function submit() {
+    if (pin.trim().length < 4) {
+      setError('Enter the 4-digit PIN from the customer.');
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      await onConfirm(pin.trim());
+      onClose();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not confirm delivery.');
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Modal visible={!!order} transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable style={styles.modalBackdrop} onPress={onClose}>
+        <Pressable
+          style={[styles.modalSheet, { backgroundColor: theme.card }]}
+          onPress={(e) => e.stopPropagation()}>
+          <View style={[styles.modalIcon, { backgroundColor: theme.primaryMuted }]}>
+            <Ionicons name="lock-closed" size={24} color={theme.primary} />
+          </View>
+          <ThemedText style={styles.modalTitle}>Confirm delivery</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary" style={styles.modalSub}>
+            Ask {order?.customerName ?? 'the customer'} for their 4-digit delivery PIN and enter it to complete the drop-off.
+          </ThemedText>
+          <TextInput
+            value={pin}
+            onChangeText={(t) => setPin(t.replace(/[^0-9]/g, '').slice(0, 4))}
+            keyboardType="number-pad"
+            maxLength={4}
+            placeholder="----"
+            placeholderTextColor={theme.textMuted}
+            style={[styles.pinInput, { borderColor: error ? theme.danger : theme.border, color: theme.text }]}
+            autoFocus
+          />
+          {error ? (
+            <ThemedText type="small" themeColor="danger" style={styles.modalError}>
+              {error}
+            </ThemedText>
+          ) : null}
+          <Button
+            label={busy ? 'Confirming…' : 'Confirm delivery'}
+            onPress={submit}
+            loading={busy}
+            disabled={busy}
+            style={styles.modalBtn}
+          />
+          <Pressable onPress={onClose} hitSlop={8}>
+            <ThemedText type="smallBold" themeColor="textSecondary">
+              Cancel
+            </ThemedText>
+          </Pressable>
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 }
 
@@ -135,7 +232,15 @@ function Route({ vendorName, customerName, address }: { vendorName: string; cust
   );
 }
 
-function DeliveryCard({ order, onAdvance }: { order: Order; onAdvance: (s: OrderStatus) => void }) {
+function DeliveryCard({
+  order,
+  onAdvance,
+  onDeliver,
+}: {
+  order: Order;
+  onAdvance: (s: OrderStatus) => void;
+  onDeliver: () => void;
+}) {
   const theme = useTheme();
   const { getVendor } = useVendors();
   const vendor = getVendor(order.vendorId);
@@ -146,6 +251,8 @@ function DeliveryCard({ order, onAdvance }: { order: Order; onAdvance: (s: Order
       : order.status === 'picked_up'
         ? { label: 'Start delivery', status: 'delivering' }
         : { label: 'Mark as delivered', status: 'delivered' };
+  // Delivery needs the customer's PIN, so route that one through the modal.
+  const onAction = action.status === 'delivered' ? onDeliver : () => onAdvance(action.status);
 
   return (
     <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
@@ -172,7 +279,7 @@ function DeliveryCard({ order, onAdvance }: { order: Order; onAdvance: (s: Order
         <Pressable style={[styles.callBtn, { backgroundColor: theme.backgroundElement }]}>
           <Ionicons name="call" size={20} color={theme.primary} />
         </Pressable>
-        <Button label={action.label} onPress={() => onAdvance(action.status)} style={styles.flex} />
+        <Button label={action.label} onPress={onAction} style={styles.flex} />
       </View>
     </View>
   );
@@ -239,4 +346,22 @@ const styles = StyleSheet.create({
   emptyIcon: { width: 96, height: 96, borderRadius: Radius.xl, alignItems: 'center', justifyContent: 'center', marginBottom: Spacing.two },
   emptyTitle: { fontSize: 18, fontWeight: '800' },
   emptyText: { textAlign: 'center', paddingHorizontal: Spacing.four },
+  modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: Spacing.four },
+  modalSheet: { borderRadius: Radius.xl, padding: Spacing.four, alignItems: 'center', gap: Spacing.two },
+  modalIcon: { width: 56, height: 56, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center', marginBottom: Spacing.one },
+  modalTitle: { fontSize: 18, fontWeight: '800' },
+  modalSub: { textAlign: 'center' },
+  pinInput: {
+    width: '70%',
+    height: 64,
+    borderWidth: 2,
+    borderRadius: Radius.md,
+    textAlign: 'center',
+    fontSize: 32,
+    fontWeight: '800',
+    letterSpacing: 12,
+    marginTop: Spacing.two,
+  },
+  modalError: { textAlign: 'center' },
+  modalBtn: { alignSelf: 'stretch', marginTop: Spacing.one },
 });

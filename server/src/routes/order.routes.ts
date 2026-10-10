@@ -57,6 +57,8 @@ router.post(
       note: note ?? '',
       paymentMethod: paymentMethod ?? 'card',
       paymentRef: paymentRef ?? '',
+      // Handover PIN the customer shows the rider on delivery.
+      deliveryPin: String(Math.floor(1000 + Math.random() * 9000)),
     });
 
     // Ping the vendor's owner that a new order arrived.

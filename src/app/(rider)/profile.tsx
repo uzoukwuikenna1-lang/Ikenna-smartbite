@@ -45,7 +45,40 @@ export default function RiderProfile() {
           <View style={[styles.bikePill, { backgroundColor: theme.backgroundElement }]}>
             <Ionicons name="bicycle" size={14} color={theme.primary} />
             <ThemedText type="small" themeColor="textSecondary">
-              Honda · ABC-123 XY
+              {[user?.rider?.vehicle, user?.rider?.plate].filter(Boolean).join(' · ') || 'Vehicle not set'}
+            </ThemedText>
+          </View>
+        </View>
+
+        {/* Mock KYC — shows the rider is a verified, identifiable person */}
+        <View style={[styles.card, styles.kycCard, { backgroundColor: theme.card, borderColor: user?.rider?.verified ? theme.primary : theme.border }]}>
+          <View style={[styles.kycIcon, { backgroundColor: theme.primaryMuted }]}>
+            <Ionicons name="shield-checkmark" size={22} color={theme.primary} />
+          </View>
+          <View style={styles.flex}>
+            <View style={styles.kycTitleRow}>
+              <ThemedText style={styles.kycTitle}>Identity verification</ThemedText>
+              {user?.rider?.verified ? (
+                <View style={[styles.kycBadge, { backgroundColor: theme.primaryMuted }]}>
+                  <ThemedText type="small" style={{ color: theme.primary, fontWeight: '800' }}>
+                    VERIFIED
+                  </ThemedText>
+                </View>
+              ) : (
+                <View style={[styles.kycBadge, { backgroundColor: theme.backgroundElement }]}>
+                  <ThemedText type="small" themeColor="textMuted" style={{ fontWeight: '800' }}>
+                    PENDING
+                  </ThemedText>
+                </View>
+              )}
+            </View>
+            <ThemedText type="small" themeColor="textSecondary">
+              {user?.rider?.idType
+                ? `${user.rider.idType} ••••${user.rider.idLast4}`
+                : 'No ID on file'}
+            </ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              ⭐ {(user?.rider?.rating ?? 5).toFixed(1)} rating · {user?.rider?.trips ?? 0} trips
             </ThemedText>
           </View>
         </View>
@@ -99,6 +132,11 @@ const styles = StyleSheet.create({
   avatarText: { fontSize: 34, fontWeight: '800' },
   name: { fontSize: 20, fontWeight: '800' },
   bikePill: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one, paddingHorizontal: Spacing.three, paddingVertical: Spacing.one + 2, borderRadius: Radius.pill, marginTop: Spacing.two },
+  kycCard: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, borderWidth: 1.5, padding: Spacing.three },
+  kycIcon: { width: 44, height: 44, borderRadius: Radius.md, alignItems: 'center', justifyContent: 'center' },
+  kycTitleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  kycTitle: { fontSize: 15, fontWeight: '800' },
+  kycBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: Radius.pill },
   statRow: { flexDirection: 'row', gap: Spacing.three },
   stat: { flex: 1, borderWidth: 1, borderRadius: Radius.lg, padding: Spacing.four, alignItems: 'center', gap: 2 },
   statValue: { fontSize: 22, fontWeight: '800' },

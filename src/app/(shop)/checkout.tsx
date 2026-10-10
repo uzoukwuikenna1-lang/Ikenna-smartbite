@@ -177,12 +177,18 @@ export default function Checkout() {
             </View>
           )}
 
+        </Section>
+
+        <Section title="Note for the kitchen">
           <TextField
             icon="chatbubble-ellipses-outline"
-            placeholder="Note for rider (optional)"
+            placeholder="Allergies or requests, e.g. less pepper (I have ulcer)"
             value={note}
             onChangeText={setNote}
           />
+          <ThemedText type="small" themeColor="textMuted">
+            The vendor sees this with your order — tell them about allergies or how you'd like it prepared.
+          </ThemedText>
         </Section>
 
         <Section title="Payment method">

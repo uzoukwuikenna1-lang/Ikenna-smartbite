@@ -33,6 +33,15 @@ export type User = {
   cards: PaymentCard[];
   favourites: string[];
   notifPrefs: NotifPrefs;
+  rider?: {
+    vehicle: string;
+    plate: string;
+    verified: boolean;
+    idType: string;
+    idLast4: string;
+    rating: number;
+    trips: number;
+  };
 };
 
 type CartLine = { item: MenuItem; qty: number };
@@ -55,6 +64,7 @@ type StoreValue = {
   register: (role: Role, name: string, email: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
   updateProfile: (patch: { name?: string; email?: string; phone?: string }) => Promise<void>;
+  submitKyc: (payload: { idType: string; idNumber: string; vehicle?: string; plate?: string }) => Promise<void>;
   // vendors + menu
   vendors: Vendor[];
   getVendor: (id: string) => Vendor | undefined;
@@ -84,6 +94,7 @@ type StoreValue = {
   acceptOrder: (id: string) => Promise<void>;
   rejectOrder: (id: string) => Promise<void>;
   setOrderStatus: (id: string, status: string) => Promise<void>;
+  completeDelivery: (id: string, pin: string) => Promise<void>;
   acceptDelivery: (id: string) => Promise<void>;
   // addresses / cards / prefs / favourites (mutate via API → refresh user)
   defaultAddress: Address | undefined;
@@ -253,6 +264,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setUser(user);
   }, []);
 
+  const submitKyc = useCallback(
+    async (payload: { idType: string; idNumber: string; vehicle?: string; plate?: string }) => {
+      // Persists the rider's (mock) identity verification to the backend/DB.
+      const { user } = await api.patch<{ user: User }>('/api/me/kyc', payload);
+      setUser(user);
+    },
+    [],
+  );
+
   // ---------- polling for live cross-role updates ----------
   useEffect(() => {
     if (!user) return;
@@ -391,6 +411,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [refreshOrders],
   );
 
+  const completeDelivery = useCallback(
+    async (id: string, pin: string) => {
+      // Rider confirms delivery with the customer's handover PIN (server verifies).
+      await api.patch(`/api/rider/orders/${id}/status`, { status: 'delivered', pin });
+      await refreshOrders();
+    },
+    [refreshOrders],
+  );
+
   const acceptDelivery = useCallback(
     async (id: string) => {
       await api.patch(`/api/rider/orders/${id}/accept`);
@@ -458,6 +487,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     register,
     logout,
     updateProfile,
+    submitKyc,
     vendors,
     getVendor,
     refreshVendors,
@@ -484,6 +514,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     acceptOrder,
     rejectOrder,
     setOrderStatus,
+    completeDelivery,
     acceptDelivery,
     defaultAddress,
     addAddress,
@@ -515,7 +546,7 @@ function useStore() {
 
 export function useAuth() {
   const s = useStore();
-  return { user: s.user, authLoading: s.authLoading, login: s.login, register: s.register, logout: s.logout, updateProfile: s.updateProfile };
+  return { user: s.user, authLoading: s.authLoading, login: s.login, register: s.register, logout: s.logout, updateProfile: s.updateProfile, submitKyc: s.submitKyc };
 }
 
 export function useVendors() {
@@ -549,6 +580,7 @@ export function useOrders() {
     acceptOrder: s.acceptOrder,
     rejectOrder: s.rejectOrder,
     setOrderStatus: s.setOrderStatus,
+    completeDelivery: s.completeDelivery,
     acceptDelivery: s.acceptDelivery,
   };
 }

@@ -48,6 +48,9 @@ export default function OrderTracking() {
   const riderName = order.rider?.name ?? 'Your rider';
   const riderVehicle = [order.rider?.vehicle, order.rider?.plate].filter(Boolean).join(' • ');
 
+  // Handover PIN: the customer shows it to the rider on arrival.
+  const showPin = !!order.deliveryPin && !isDelivered;
+
   return (
     <Screen edges={['top']}>
       <View style={styles.appbar}>
@@ -130,11 +133,30 @@ export default function OrderTracking() {
               <ThemedText style={{ fontSize: 24 }}>🧑🏾</ThemedText>
             </View>
             <View style={styles.flex}>
-              <ThemedText style={styles.riderName}>{riderName} · your rider</ThemedText>
+              <View style={styles.riderNameRow}>
+                <ThemedText style={styles.riderName}>{riderName}</ThemedText>
+                {order.rider?.verified ? (
+                  <View style={[styles.verifyBadge, { backgroundColor: theme.primaryMuted }]}>
+                    <Ionicons name="shield-checkmark" size={12} color={theme.primary} />
+                    <ThemedText type="small" style={{ color: theme.primary, fontWeight: '700' }}>
+                      Verified
+                    </ThemedText>
+                  </View>
+                ) : null}
+              </View>
               {riderVehicle ? (
                 <ThemedText type="small" themeColor="textSecondary">
                   {riderVehicle}
                 </ThemedText>
+              ) : null}
+              {order.rider ? (
+                <View style={styles.riderMetaRow}>
+                  <Ionicons name="star" size={12} color={theme.star} />
+                  <ThemedText type="small" themeColor="textSecondary">
+                    {order.rider.rating.toFixed(1)} · {order.rider.trips} trips
+                    {order.rider.idType ? ` · ${order.rider.idType} ••••${order.rider.idLast4}` : ''}
+                  </ThemedText>
+                </View>
               ) : null}
             </View>
             <Pressable
@@ -155,6 +177,28 @@ export default function OrderTracking() {
                 Your order is ready — assigning a nearby rider.
               </ThemedText>
             </View>
+          </View>
+        ) : null}
+
+        {/* Delivery PIN — the customer reads this out to the rider on arrival */}
+        {showPin ? (
+          <View style={[styles.pinCard, { backgroundColor: theme.card, borderColor: theme.primary }]}>
+            <View style={styles.pinHeader}>
+              <Ionicons name="lock-closed" size={16} color={theme.primary} />
+              <ThemedText type="smallBold" themeColor="primary">
+                Delivery PIN
+              </ThemedText>
+            </View>
+            <View style={styles.pinDigits}>
+              {order.deliveryPin!.split('').map((d, i) => (
+                <View key={i} style={[styles.pinBox, { backgroundColor: theme.primaryMuted }]}>
+                  <ThemedText style={[styles.pinDigit, { color: theme.primary }]}>{d}</ThemedText>
+                </View>
+              ))}
+            </View>
+            <ThemedText type="small" themeColor="textSecondary" style={styles.pinHint}>
+              Give this PIN to your rider only when your food is in your hands. It confirms you received your order.
+            </ThemedText>
           </View>
         ) : null}
 
@@ -276,7 +320,16 @@ const styles = StyleSheet.create({
   },
   riderAvatar: { width: 48, height: 48, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center' },
   riderName: { fontWeight: '700', fontSize: 15 },
+  riderNameRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, flexWrap: 'wrap' },
+  riderMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  verifyBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 8, paddingVertical: 2, borderRadius: Radius.pill },
   riderBtn: { width: 44, height: 44, borderRadius: Radius.pill, alignItems: 'center', justifyContent: 'center' },
+  pinCard: { borderWidth: 1.5, borderRadius: Radius.lg, padding: Spacing.four, gap: Spacing.two, alignItems: 'center' },
+  pinHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one + 2 },
+  pinDigits: { flexDirection: 'row', gap: Spacing.two },
+  pinBox: { width: 48, height: 58, borderRadius: Radius.md, alignItems: 'center', justifyContent: 'center' },
+  pinDigit: { fontSize: 28, fontWeight: '800' },
+  pinHint: { textAlign: 'center' },
   detailsTitle: { fontSize: 16, fontWeight: '800', marginBottom: Spacing.two },
   detailRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 4 },
   divider: { height: 1, marginVertical: Spacing.two },

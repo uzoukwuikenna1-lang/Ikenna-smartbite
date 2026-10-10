@@ -33,6 +33,36 @@ router.patch(
   }),
 );
 
+// PATCH /api/me/kyc — rider completes the (mock) identity verification flow.
+// Persists the verification to the database so it survives across sessions and
+// is visible to customers on their order tracker.
+router.patch(
+  '/kyc',
+  asyncHandler(async (req, res) => {
+    const user = await loadUser(req.user!.id);
+    if (user.role !== 'rider') throw badRequest('Only riders complete identity verification');
+
+    const { idType, idNumber, vehicle, plate } = req.body ?? {};
+    const digits = String(idNumber ?? '').replace(/\D/g, '');
+    if (!idType || digits.length < 4) {
+      throw badRequest('An ID type and a valid ID number are required');
+    }
+
+    user.rider = {
+      ...(user.rider ?? {}),
+      vehicle: vehicle || user.rider?.vehicle || 'Motorcycle',
+      plate: plate || user.rider?.plate || '',
+      verified: true,
+      idType: String(idType),
+      idLast4: digits.slice(-4),
+      rating: user.rider?.rating ?? 5,
+      trips: user.rider?.trips ?? 0,
+    };
+    await user.save();
+    res.json({ user: presentUser(user) });
+  }),
+);
+
 // PATCH /api/me/push-token — register the device's Expo push token
 router.patch(
   '/push-token',

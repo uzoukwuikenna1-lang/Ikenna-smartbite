@@ -53,9 +53,18 @@ router.patch(
 router.patch(
   '/orders/:id/status',
   asyncHandler(async (req, res) => {
-    const { status } = req.body ?? {};
+    const { status, pin } = req.body ?? {};
     const allowed: OrderStatus[] = ['picked_up', 'delivering', 'delivered'];
     if (!allowed.includes(status)) throw badRequest('Invalid status for a rider');
+
+    // Delivery must be confirmed with the customer's handover PIN.
+    if (status === 'delivered') {
+      const current = await Order.findOne({ _id: req.params.id, riderId: req.user!.id }).lean();
+      if (!current) throw notFound('Delivery not found');
+      const given = String(pin ?? '').trim();
+      if (!given) throw badRequest('Ask the customer for their delivery PIN');
+      if (given !== String(current.deliveryPin ?? '')) throw badRequest('Incorrect delivery PIN');
+    }
 
     const order = await Order.findOneAndUpdate(
       { _id: req.params.id, riderId: req.user!.id },

@@ -151,6 +151,15 @@ function OrderCard({
         </ThemedText>
       </View>
 
+      {order.note ? (
+        <View style={[styles.noteRow, { backgroundColor: theme.primaryMuted }]}>
+          <Ionicons name="chatbubble-ellipses" size={15} color={theme.primary} />
+          <ThemedText type="small" style={[styles.flex, { color: theme.primary, fontWeight: '600' }]}>
+            {order.note}
+          </ThemedText>
+        </View>
+      ) : null}
+
       {isNew ? (
         <View style={styles.actions}>
           <Button label="Reject" variant="secondary" onPress={onReject} style={styles.flex} />
@@ -195,6 +204,13 @@ const styles = StyleSheet.create({
   total: { fontSize: 16, fontWeight: '800' },
   items: { gap: 2, paddingVertical: Spacing.one },
   addrRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  noteRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.two,
+    padding: Spacing.two + 2,
+    borderRadius: Radius.md,
+  },
   actions: { flexDirection: 'row', gap: Spacing.two, marginTop: Spacing.one },
   statusPill: {
     flexDirection: 'row',

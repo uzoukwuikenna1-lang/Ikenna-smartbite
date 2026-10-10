@@ -42,6 +42,9 @@ const orderSchema = new Schema(
     paymentRef: { type: String, default: '' },
     riderId: { type: Schema.Types.ObjectId, ref: 'User', default: null },
     riderAccepted: { type: Boolean, default: false },
+    // 4-digit handover PIN: the customer reveals it on arrival and the rider
+    // must enter it to mark the order delivered (proof of handover).
+    deliveryPin: { type: String, default: '' },
     rated: { type: Boolean, default: false },
   },
   { timestamps: true },

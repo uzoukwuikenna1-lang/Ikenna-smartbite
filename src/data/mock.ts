@@ -95,7 +95,18 @@ export type Order = {
   rated?: boolean;
   mine?: boolean;
   riderAccepted?: boolean;
-  rider?: { name: string; phone: string; vehicle: string; plate: string } | null;
+  rider?: {
+    name: string;
+    phone: string;
+    vehicle: string;
+    plate: string;
+    verified: boolean;
+    idType: string;
+    idLast4: string;
+    rating: number;
+    trips: number;
+  } | null;
+  deliveryPin?: string;
 };
 
 export type UserStatus = 'active' | 'suspended';

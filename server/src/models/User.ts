@@ -43,10 +43,16 @@ const userSchema = new Schema(
     // Vendor role: link to the Vendor document they manage
     vendorId: { type: Schema.Types.ObjectId, ref: 'Vendor', default: null },
 
-    // Rider role: simple vehicle info for the demo
+    // Rider role: vehicle info + a mock KYC record so customers can see the
+    // delivery person is a verified, identifiable human (demo data only).
     rider: {
       vehicle: { type: String, default: 'Honda' },
       plate: { type: String, default: '' },
+      verified: { type: Boolean, default: false },
+      idType: { type: String, default: '' }, // e.g. "Student ID", "NIN"
+      idLast4: { type: String, default: '' }, // masked — only the last 4 digits
+      rating: { type: Number, default: 5 },
+      trips: { type: Number, default: 0 },
     },
 
     // Expo push token (set from the app) for order notifications

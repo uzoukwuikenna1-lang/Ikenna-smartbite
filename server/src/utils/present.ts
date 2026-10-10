@@ -50,8 +50,16 @@ export function presentOrder(o: AnyDoc, currentUserId?: string) {
           phone: riderDoc.phone ?? '',
           vehicle: riderDoc.rider?.vehicle ?? '',
           plate: riderDoc.rider?.plate ?? '',
+          verified: !!riderDoc.rider?.verified,
+          idType: riderDoc.rider?.idType ?? '',
+          idLast4: riderDoc.rider?.idLast4 ?? '',
+          rating: riderDoc.rider?.rating ?? 5,
+          trips: riderDoc.rider?.trips ?? 0,
         }
       : null;
+  // Only the customer who placed the order may see the handover PIN — never the
+  // rider (otherwise they could confirm delivery without actually handing over).
+  const isOwner = currentUserId ? String(o.customerId) === currentUserId : false;
   return {
     id: String(o._id),
     vendorId: String(o.vendorId),
@@ -75,6 +83,7 @@ export function presentOrder(o: AnyDoc, currentUserId?: string) {
     rated: o.rated,
     riderAccepted: o.riderAccepted,
     rider,
+    deliveryPin: isOwner ? (o.deliveryPin ?? '') : undefined,
     createdAt: (o.createdAt instanceof Date ? o.createdAt : new Date(o.createdAt)).toISOString(),
     mine: currentUserId ? String(o.customerId) === currentUserId : undefined,
   };
@@ -103,6 +112,18 @@ export function presentUser(u: AnyDoc) {
     })),
     favourites: u.favourites ?? [],
     notifPrefs: u.notifPrefs,
+    rider:
+      u.role === 'rider'
+        ? {
+            vehicle: u.rider?.vehicle ?? '',
+            plate: u.rider?.plate ?? '',
+            verified: !!u.rider?.verified,
+            idType: u.rider?.idType ?? '',
+            idLast4: u.rider?.idLast4 ?? '',
+            rating: u.rider?.rating ?? 5,
+            trips: u.rider?.trips ?? 0,
+          }
+        : undefined,
   };
 }
 

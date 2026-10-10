@@ -68,7 +68,7 @@ type UserSeed = {
   status?: 'active' | 'suspended';
   vendorKey?: string;
   phone?: string;
-  rider?: { vehicle: string; plate: string };
+  rider?: { vehicle: string; plate: string; verified: boolean; idType: string; idLast4: string; rating: number; trips: number };
 };
 
 const USERS: UserSeed[] = [
@@ -77,8 +77,8 @@ const USERS: UserSeed[] = [
   { name: 'Tunde Adeyemi', email: 'tunde@futo.edu.ng', role: 'customer' },
   { name: 'Ada Nwosu', email: 'ada@futo.edu.ng', role: 'customer', status: 'suspended' },
   { name: 'Grace Effiong', email: 'grace@futo.edu.ng', role: 'customer' },
-  { name: 'Emeka Eze', email: 'emeka@futo.edu.ng', role: 'rider', phone: '0803 123 4567', rider: { vehicle: 'Honda', plate: 'ABC-123 XY' } },
-  { name: 'Ibrahim Kabir', email: 'ibrahim@futo.edu.ng', role: 'rider', phone: '0806 987 6543', rider: { vehicle: 'Bajaj', plate: 'IMO-456 FT' } },
+  { name: 'Emeka Eze', email: 'emeka@futo.edu.ng', role: 'rider', phone: '0803 123 4567', rider: { vehicle: 'Honda', plate: 'ABC-123 XY', verified: true, idType: 'Student ID', idLast4: '4821', rating: 4.9, trips: 212 } },
+  { name: 'Ibrahim Kabir', email: 'ibrahim@futo.edu.ng', role: 'rider', phone: '0806 987 6543', rider: { vehicle: 'Bajaj', plate: 'IMO-456 FT', verified: true, idType: 'NIN', idLast4: '7390', rating: 4.8, trips: 156 } },
   { name: 'Mama Nkechi', email: 'mama@futo.edu.ng', role: 'vendor', vendorKey: 'v1' },
   { name: 'Platform Admin', email: 'admin@futo.edu.ng', role: 'admin' },
 ];
