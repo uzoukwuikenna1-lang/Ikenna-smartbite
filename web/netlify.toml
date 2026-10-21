@@ -1,0 +1,13 @@
+# Netlify config for the SmartBite FUTO landing page.
+# Publish this folder (web/) as the site root.
+
+[build]
+  publish = "."
+
+# Make sure the APK is served as a download with the right type.
+[[headers]]
+  for = "/downloads/*.apk"
+  [headers.values]
+    Content-Type = "application/vnd.android.package-archive"
+    Content-Disposition = "attachment"
+    Cache-Control = "public, max-age=86400"

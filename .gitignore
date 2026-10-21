@@ -42,3 +42,6 @@ example
 /ios
 /android
 .env
+
+# APK binaries are too large for Git (hosted via the deploy folder instead)
+web/downloads/*.apk
